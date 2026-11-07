@@ -44,6 +44,7 @@ export default function App() {
     { role: "assistant", content: "JARVIS online. How may I help you?" },
   ]);
   const [busy, setBusy] = useState(false);
+  const [provider, setProvider] = useState("ollama");
   const [listening, setListening] = useState(false);
   const recognition = useRef(null);
   const voiceMode = useRef("wake");
@@ -229,7 +230,7 @@ export default function App() {
 
     setBusy(true);
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch(provider === "groq" ? "/api/groq" : "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),
@@ -291,6 +292,10 @@ export default function App() {
           {busy && <div className="message assistant"><span>JARVIS</span><p className="typing">Thinking...</p></div>}
         </div>
         <form onSubmit={send} className="composer">
+          <select value={provider} onChange={(event) => setProvider(event.target.value)} aria-label="AI provider">
+            <option value="ollama">Ollama</option>
+            <option value="groq">Groq</option>
+          </select>
           <button type="button" className={`voice ${listening ? "active" : ""}`} onClick={toggleVoice} aria-label="Voice input">
             {listening ? "■" : "●"}
           </button>

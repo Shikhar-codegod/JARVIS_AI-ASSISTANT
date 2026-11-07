@@ -21,6 +21,7 @@ h1 { margin: 4px 0; font-size: 32px; letter-spacing: 8px; }
 .message.user p { border-color: #205d72; background: #0c2b3c; }
 .typing { color: #7ab8ca !important; }
 .composer { display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #17334a; }
+.composer select { border: 1px solid #24516b; border-radius: 10px; padding: 0 8px; color: #bceeff; background: #0c2637; font: inherit; }
 input { flex: 1; min-width: 0; border: 1px solid #24516b; border-radius: 10px; padding: 14px; outline: none; color: #e8f4ff; background: #081522; font: inherit; }
 input:focus { border-color: #53cfff; }
 button { cursor: pointer; border: 1px solid #28647c; border-radius: 10px; color: #bceeff; background: #0c2637; font: inherit; }
