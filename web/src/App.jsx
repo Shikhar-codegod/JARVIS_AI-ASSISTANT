@@ -45,6 +45,7 @@ export default function App() {
   ]);
   const [busy, setBusy] = useState(false);
   const [provider, setProvider] = useState("ollama");
+  const providerRef = useRef(provider);
   const [listening, setListening] = useState(false);
   const recognition = useRef(null);
   const voiceMode = useRef("wake");
@@ -55,6 +56,10 @@ export default function App() {
   const recognitionRunning = useRef(false);
   const startListeningRef = useRef(null);
   const commandTab = useRef(null);
+
+  useEffect(() => {
+    providerRef.current = provider;
+  }, [provider]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -158,10 +163,6 @@ export default function App() {
     }
     voiceEnabled.current = true;
     voiceMode.current = "wake";
-    if (!commandTab.current || commandTab.current.closed) {
-      commandTab.current = window.open("about:blank", "jarvis-command");
-      window.focus();
-    }
     if (!recognitionRunning.current) {
       try {
         recognition.current.start();
@@ -230,7 +231,7 @@ export default function App() {
 
     setBusy(true);
     try {
-      const response = await fetch(provider === "groq" ? "/api/groq" : "/api/chat", {
+      const response = await fetch(providerRef.current === "groq" ? "/api/groq" : "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),
@@ -288,7 +289,7 @@ export default function App() {
           <div>
             <p className="eyebrow">PERSONAL AI ASSISTANT</p>
             <h1>JARVIS</h1>
-            <p className="status"><i /> Online · Ollama connected through secure proxy</p>
+            <p className="status"><i /> Online · {provider === "groq" ? "Groq" : "Ollama"} connected through secure proxy</p>
           </div>
         </header>
         <div className="messages" aria-live="polite">
