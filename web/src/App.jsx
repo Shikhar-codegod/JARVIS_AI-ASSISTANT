@@ -5,6 +5,7 @@ const links = {
   facebook: "https://www.facebook.com",
   youtube: "https://www.youtube.com",
   linkedin: "https://www.linkedin.com/in/shikhar-goyal-9a9a69344/",
+  github: "https://github.com/Shikhar-codegod",
 };
 
 const songs = {
@@ -17,7 +18,11 @@ const songs = {
 function localAction(text) {
   const command = text.toLowerCase().trim();
   for (const [site, url] of Object.entries(links)) {
-  if (command.includes(`open ${site}`) || (site === "linkedin" && command.includes("open my linkedin"))) {
+  if (
+    command.includes(`open ${site}`) ||
+    (site === "linkedin" && command.includes("open my linkedin")) ||
+    (site === "github" && command.includes("open my github"))
+  ) {
     return { message: `Opening ${site}.`, url };
     }
   }
