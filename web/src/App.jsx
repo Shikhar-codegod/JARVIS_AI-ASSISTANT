@@ -235,7 +235,16 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      if (!responseText) {
+        throw new Error(`The server returned an empty response (HTTP ${response.status}).`);
+      }
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(`The server returned an invalid response (HTTP ${response.status}).`);
+      }
       if (!response.ok) throw new Error(data.error || "The assistant could not respond.");
       setMessages((old) => [...old, { role: "assistant", content: data.response }]);
       speak(data.response, () => {

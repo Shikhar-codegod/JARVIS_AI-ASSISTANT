@@ -51,6 +51,81 @@ function localApi(env) {
           response.end(JSON.stringify({ error: "Could not connect to the remote Ollama server." }));
         }
       });
+
+      server.middlewares.use("/api/groq", async (request, response) => {
+        response.setHeader("Content-Type", "application/json");
+        if (request.method !== "POST") {
+          response.statusCode = 405;
+          response.end(JSON.stringify({ error: "Method not allowed." }));
+          return;
+        }
+
+        let body = "";
+        for await (const chunk of request) body += chunk;
+
+        let prompt;
+        try {
+          prompt = JSON.parse(body).prompt?.trim();
+        } catch {
+          response.statusCode = 400;
+          response.end(JSON.stringify({ error: "Invalid request body." }));
+          return;
+        }
+
+        if (!prompt || prompt.length > 4000) {
+          response.statusCode = 400;
+          response.end(JSON.stringify({ error: "Prompt must be between 1 and 4000 characters." }));
+          return;
+        }
+
+        const apiKey = env.GROQ_API_KEY;
+        const model = env.GROQ_MODEL || "openai/gpt-oss-120b";
+        if (!apiKey) {
+          response.statusCode = 500;
+          response.end(JSON.stringify({ error: "Set GROQ_API_KEY in web/.env.local." }));
+          return;
+        }
+
+        try {
+          const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + apiKey,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [{ role: "user", content: `Answer briefly in 1–2 sentences: ${prompt}` }],
+              stream: false,
+            }),
+          });
+          const responseText = await groqResponse.text();
+          let data = {};
+          if (responseText) {
+            try {
+              data = JSON.parse(responseText);
+            } catch {
+              response.statusCode = 502;
+              response.end(JSON.stringify({ error: `Groq returned an invalid response (HTTP ${groqResponse.status}).` }));
+              return;
+            }
+          }
+          response.statusCode = groqResponse.ok ? 200 : 502;
+          if (!groqResponse.ok) {
+            response.end(JSON.stringify({ error: data.error?.message || "Groq request failed." }));
+            return;
+          }
+          if (!data.choices?.[0]?.message?.content) {
+            response.statusCode = 502;
+            response.end(JSON.stringify({ error: `Groq returned an empty response (HTTP ${groqResponse.status}).` }));
+            return;
+          }
+          response.end(JSON.stringify({ response: data.choices[0].message.content }));
+        } catch {
+          response.statusCode = 502;
+          response.end(JSON.stringify({ error: "Could not connect to the Groq API." }));
+        }
+      });
     },
   };
 }

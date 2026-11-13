@@ -12,7 +12,7 @@ export default async function handler(request, response) {
   }
 
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
   if (!apiKey) return response.status(500).json({ error: "GROQ_API_KEY is not configured." });
 
   try {
@@ -28,12 +28,28 @@ export default async function handler(request, response) {
         stream: false,
       }),
     });
-    const data = await groqResponse.json();
+    const responseText = await groqResponse.text();
+    let data = {};
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (error) {
+        console.error("Groq returned invalid JSON:", error);
+        return response.status(502).json({
+          error: `Groq returned an invalid response (HTTP ${groqResponse.status}).`,
+        });
+      }
+    }
     if (!groqResponse.ok) {
       return response.status(502).json({ error: data.error?.message || "Groq request failed." });
     }
+    if (!data.choices?.[0]?.message?.content) {
+      return response.status(502).json({
+        error: `Groq returned an empty response (HTTP ${groqResponse.status}).`,
+      });
+    }
     return response.status(200).json({
-      response: data.choices?.[0]?.message?.content || "I did not receive a response.",
+      response: data.choices[0].message.content,
     });
   } catch (error) {
     console.error("Groq request failed:", error);
