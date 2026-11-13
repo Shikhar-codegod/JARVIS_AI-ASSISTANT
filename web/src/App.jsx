@@ -44,7 +44,10 @@ export default function App() {
     { role: "assistant", content: "JARVIS online. How may I help you?" },
   ]);
   const [busy, setBusy] = useState(false);
-  const [provider, setProvider] = useState("ollama");
+  const [provider, setProvider] = useState(() => {
+    if (typeof window === "undefined") return "groq";
+    return window.localStorage.getItem("jarvis-provider") || "groq";
+  });
   const providerRef = useRef(provider);
   const [listening, setListening] = useState(false);
   const recognition = useRef(null);
@@ -59,6 +62,7 @@ export default function App() {
 
   useEffect(() => {
     providerRef.current = provider;
+    window.localStorage.setItem("jarvis-provider", provider);
   }, [provider]);
 
   useEffect(() => {
